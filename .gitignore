@@ -1,0 +1,5 @@
+.build/
+# Deliberately unpinned: the fuzzer tracks winnow main, and winnow's security
+# workflow overrides the dependency to a local path, which Package.resolved
+# cannot describe.
+Package.resolved

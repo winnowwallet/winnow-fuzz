@@ -1,0 +1,44 @@
+name: Fuzz
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    - cron: "17 6 * * 1"
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    runs-on: macos-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+
+      # Resolves winnow from its public URL at main — this lane proves the
+      # sibling-repo consumption path itself. The fixed seed makes it the
+      # same regression corpus every time; rotating corpora live in winnow's
+      # security workflow, where the commit under test is precise.
+      - name: Fixed-seed smoke against winnow main
+        run: |
+          mkdir -p "$RUNNER_TEMP/fuzz-artifacts"
+          set -o pipefail
+          swift run --configuration release WinnowFuzz \
+            --iterations 1000 \
+            --seed 0x57494e4e4f575055 \
+            --max-input 16384 \
+            --artifact-dir "$RUNNER_TEMP/fuzz-artifacts" \
+            2>&1 | tee "$RUNNER_TEMP/fuzz-artifacts/run.log"
+
+      - name: Upload artifacts on failure
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: fuzz-smoke-${{ github.run_id }}
+          path: ${{ runner.temp }}/fuzz-artifacts/
+          if-no-files-found: warn
+          retention-days: 7
