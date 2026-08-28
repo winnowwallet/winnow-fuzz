@@ -2,16 +2,17 @@
 import Foundation
 import PackageDescription
 
-// The fuzzer lives beside the wallet, not inside it: it consumes winnow's
-// public library products only, so it exercises exactly the parsing surface
-// an attacker reaches. By default it tracks winnow's `main`; winnow's own
-// security workflow overrides the dependency with WINNOW_PATH to fuzz the
-// commit under test rather than whatever `main` was when this ran.
+// The fuzzer lives beside the library, not inside it: it consumes
+// btc-swift's public products only, so it exercises exactly the parsing
+// surface an attacker reaches. By default it tracks btc-swift `main`;
+// btc-swift's security workflow overrides the dependency with WINNOW_PATH
+// to fuzz the commit under test rather than whatever `main` was when this
+// ran; the explicit name pins the identity regardless of checkout dir.
 let winnow: Package.Dependency
 if let path = ProcessInfo.processInfo.environment["WINNOW_PATH"] {
-    winnow = .package(name: "winnow", path: path)
+    winnow = .package(name: "btc-swift", path: path)
 } else {
-    winnow = .package(url: "https://github.com/winnowwallet/winnow.git", branch: "main")
+    winnow = .package(url: "https://github.com/winnowwallet/btc-swift", branch: "main")
 }
 
 let package = Package(
@@ -25,9 +26,9 @@ let package = Package(
         .executableTarget(
             name: "WinnowFuzz",
             dependencies: [
-                .product(name: "BitcoinCore", package: "winnow"),
-                .product(name: "BitcoinP2P", package: "winnow"),
-                .product(name: "WalletCore", package: "winnow"),
+                .product(name: "BitcoinCore", package: "btc-swift"),
+                .product(name: "BitcoinP2P", package: "btc-swift"),
+                .product(name: "WalletCore", package: "btc-swift"),
             ]
         ),
     ]
